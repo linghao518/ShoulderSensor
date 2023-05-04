@@ -13,6 +13,9 @@ from collections import deque
 from utils import savgol, get_sensor_scaler, minmax_scaler, standardize_sensor_channlewise
 from predict import load_attention_lstm, load_lstm, load_attention, device, batch_size, window_length
 import random
+import threading
+import json
+
 
 os.environ['QT_MAC_WANTS_LAYER'] = '1'
 
@@ -21,12 +24,12 @@ model.eval()
 MEAN_WINDOW_LENGTH = 10
 initAngleBuf = list()
 ws = None
+deqSensor = deque(maxlen=window_length)
 
 
 # 读取数据
-async def readSerial(websocket):
+def readSerial():
   print('[INFO] 开始线程【Read Serial】')
-  deqSensor = deque(maxlen=window_length)
   while True:
     sensorResultList = [
         "92.58, 110.00, 46.98, 104.29, 115.91,",
@@ -38,6 +41,7 @@ async def readSerial(websocket):
     rawSensor = np.array([np.double(i) for i in rawSensorStr.split(',')[:-1]])
     # Test for GUI plot
     # rawSensor = np.random.rand(5) * 100
+    global deqSensor
     deqSensor.append(rawSensor)
     sensor = np.array(list(deqSensor))
     # Standardize
@@ -46,56 +50,40 @@ async def readSerial(websocket):
     # sensor = np.array(list(map(minmax_scaler, sensor)))
     sensorDeqStd = standardize_sensor_channlewise(sensor)
     # Send sensor deque for predict.
-    # print('sensorDeqStd')
-    # print(sensorDeqStd)
-    #print(rawSensor)
-
-
-    print('sensor_batch start', ws)
-    await ws.send(sensorDeqStd)
-    print('sensor_batch end')
-
-    # filter
-    # for i in range(sensor.shape[1]):
-    #     sensor[:, i] = savgol(sensor[:, i], 51, 2, do_plot=False)
-    # # fit batch size
-    # sensor_batch = np.stack([sensor]*batch_size)
-    # sensor_batch = torch.from_numpy(sensor_batch).float().to(device)
-
-
-    # predict
-    # angle = model(sensor_batch)
-    # print(angle)
-    # angle = angle[0].data.numpy()
-    # angle = np.around(angle, 1)
-    # # update GUI label
-    # rtmAngle = angle
-    # initAngleBuf.append(list(self.rtmAngle))
-    
-    # print('initAngleBuf')
-    # print(initAngleBuf)
 
     time.sleep(0.1)
+
+
+#initAngle
+async def initAngle():
+  print('initAngle')
+  print(deqSensor)
+  await ws.send('initAngle1111')
+
 
 # Default
 def default():
   return "Invalid operation"
 
 # 执行操作
-async def action(websocket,operation):
+async def action(operation):
   actionDict = {
-    'readSerial': readSerial
+    # 'readSerial': readSerial,
+    'initAngle': initAngle
   }
-  await actionDict.get(operation, default)(websocket)
+  await actionDict.get(operation, default)()
 
 # 启动WS服务
-async def handle_client(websocket, path):
+async def handle_client(websocket):
   global ws
   ws = websocket
   print(ws)
+  readSerialThread = threading.Thread(target=readSerial)
+  readSerialThread.start()
   while True:
     message = await websocket.recv()
-    await action(websocket, message)
+    print(message)
+    await action(message)
 
     # response = f"Echo: {message}"
     # await websocket.send(response)
