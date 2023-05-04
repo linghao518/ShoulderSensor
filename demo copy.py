@@ -15,7 +15,7 @@ from UI.DialogPlot import Ui_DialogPlot
 from collections import deque
 from utils import savgol, get_sensor_scaler, minmax_scaler, standardize_sensor_channlewise
 from predict import load_attention_lstm, load_lstm, load_attention, device, batch_size, window_length
-import random
+
 
 os.environ['QT_MAC_WANTS_LAYER'] = '1'
 
@@ -121,6 +121,21 @@ class MainWindow(QMainWindow, Ui_Dialog):
 class ReadSerial(QThread):
     sensorDeqOutSignal = Signal(object)
     sensorRawOutSignal = Signal(object)
+    def __init__(self, parent=None):
+        super(ReadSerial, self).__init__(parent)
+        try:
+            self.ser = serial.Serial(  # 下面这些参数根据情况修改
+            port='/dev/cu.usbserial-1430',  # 串口
+            baudrate=9600,  # 波特率
+            parity=serial.PARITY_ODD,
+            stopbits=serial.STOPBITS_TWO,
+            bytesize=serial.SEVENBITS)
+        except Exception:
+            print("[ERROR] Please check usb serial!")
+        
+    def __del__(self):
+        self.wait()
+        print('[INFO] 挂起线程【Read Serial】')
 
     def run(self):
         print('[INFO] 开始线程【Read Serial】')
@@ -128,14 +143,7 @@ class ReadSerial(QThread):
         # scaler = get_sensor_scaler()
         deqSensor = deque(maxlen=window_length)
         while True:
-            sensorResultList = [
-                "92.58, 110.00, 46.98, 104.29, 115.91,",
-                "92.58, 110.00, 46.98, 104.29, 115.41,",
-                "92.15, 110.00, 47.29, 104.29, 115.91,",
-            ]
-            rawSensorStr = random.choice(sensorResultList)
-            # print("1111:" + rawSensorStr)
-            # rawSensorStr = self.ser.readline().decode("utf-8")
+            rawSensorStr = self.ser.readline().decode("utf-8")
             rawSensor = np.array([np.double(i) for i in rawSensorStr.split(',')[:-1]])
             # Test for GUI plot
             # rawSensor = np.random.rand(5) * 100
@@ -205,7 +213,6 @@ class PredictSerial(QThread):
         self.initAngleBuf = list()
         # emit mean angle
         self.initAngle = meanInitAngle
-        print(meanInitAngle)
         self.angleInitUpdtSignal.emit(meanInitAngle)
 
     def closeUpdateInitLabel(self):
@@ -237,8 +244,6 @@ class PredictSerial(QThread):
         while True:
             if not((self.sensor is None) or (self.sensor.shape != (window_length, 5))):
                 sensor = self.sensor
-                print('sensor')
-                print(sensor)
                 # filter
                 for i in range(sensor.shape[1]):
                     sensor[:, i] = savgol(sensor[:, i], 51, 2, do_plot=False)
@@ -246,9 +251,6 @@ class PredictSerial(QThread):
                 sensor_batch = np.stack([sensor]*batch_size)
                 sensor_batch = torch.from_numpy(sensor_batch).float().to(device)
                 # predict
-                print('sensor_batch start')
-                print(sensor_batch)
-                print('sensor_batch end')
                 angle = model(sensor_batch)
                 angle = angle[0].data.numpy()
                 angle = np.around(angle, 1)
@@ -260,8 +262,6 @@ class PredictSerial(QThread):
                 
                 if self.doUpdateInitLabel:
                     ## realtime init angle
-                    print('rtmAngle')
-                    print(self.rtmAngle)
                     self.angleInitOutSignal.emit(self.rtmAngle)
                 if self.doUpdateDiffLabel:
                     self.diffAngle = self.updtDiffAngle() + 5
@@ -271,8 +271,6 @@ class PredictSerial(QThread):
                     # exchange real-time angle with mean-filter angle
                     # self.diffAngle = diffAngleMean
                     self.diffAngle = np.around(self.diffAngle, 1)
-                    print('diffAngle')
-                    print(self.diffAngle)
                     self.angleUpdtDiffSignal.emit(self.diffAngle)
                 if self.trainState:
                     self.trainAngleBuf.append(list(self.rtmAngle))
