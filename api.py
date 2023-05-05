@@ -15,6 +15,7 @@ from predict import load_attention_lstm, load_lstm, load_attention, device, batc
 import random
 import threading
 import json
+import math
 
 
 os.environ['QT_MAC_WANTS_LAYER'] = '1'
@@ -23,13 +24,39 @@ model = load_attention_lstm()
 model.eval()
 MEAN_WINDOW_LENGTH = 10
 initAngleBuf = list()
+sensorDeqStd = None
+initAngle = None
+diffAngle = None
 ws = None
-deqSensor = deque(maxlen=window_length)
 
+# 根据模型预测数据
+def predictSerial():
+  global sensorDeqStd
+  global initAngleBuf
+  global initAngle
+  global diffAngle
+  if not((sensorDeqStd is None) or (sensorDeqStd.shape != (window_length, 5))):
+    # filter
+    for i in range(sensorDeqStd.shape[1]):
+      sensorDeqStd[:, i] = savgol(sensorDeqStd[:, i], 51, 2, do_plot=False)
+    # fit batch size
+    sensor_batch = np.stack([sensorDeqStd]*batch_size)
+    sensor_batch = torch.from_numpy(sensor_batch).float().to(device)
+    angle = model(sensor_batch)
+    angle = angle[0].data.numpy()
+    angle = np.around(angle, 1)
+    # update GUI label
+    rtmAngle = angle
+    initAngleBuf.append(list(rtmAngle))
+    if (not None and isinstance(initAngle, np.ndarray)):
+      diffAngle = rtmAngle - initAngle
+      diffAngle = np.around(diffAngle, 1)
+      # print(diffAngle)
 
 # 读取数据
 def readSerial():
   print('[INFO] 开始线程【Read Serial】')
+  deqSensor = deque(maxlen=window_length)
   while True:
     sensorResultList = [
         "92.58, 110.00, 46.98, 104.29, 115.91,",
@@ -39,27 +66,45 @@ def readSerial():
     rawSensorStr = random.choice(sensorResultList)
     # rawSensorStr = self.ser.readline().decode("utf-8")
     rawSensor = np.array([np.double(i) for i in rawSensorStr.split(',')[:-1]])
-    # Test for GUI plot
-    # rawSensor = np.random.rand(5) * 100
-    global deqSensor
     deqSensor.append(rawSensor)
     sensor = np.array(list(deqSensor))
-    # Standardize
-    # sensor = scaler.fit_transform(sensor)
-    # Sensor-wize MinMax Scaler
-    # sensor = np.array(list(map(minmax_scaler, sensor)))
+    global sensorDeqStd
     sensorDeqStd = standardize_sensor_channlewise(sensor)
     # Send sensor deque for predict.
-
+    predictSerial()
     time.sleep(0.1)
 
 
 #initAngle
-async def initAngle():
-  print('initAngle')
-  print(deqSensor)
-  await ws.send('initAngle1111')
+async def init():
+  global initAngleBuf
+  global initAngle
 
+  if (not None and isinstance(initAngle, np.ndarray)):
+    print('已初始化')
+  else:
+    meanInitAngle = np.mean(np.array(initAngleBuf), axis=0)
+    meanInitAngle = np.around(meanInitAngle, 1)
+    initAngle = meanInitAngle
+    print(np.array(f'[INFO] 初始角度获取平均(最小化)了 {np.array(initAngleBuf).shape[0]} 组数据。'))
+
+  data = {
+    'type': 'init',
+    'data': initAngle.tolist()
+  }
+  await ws.send(json.dumps(data))
+  
+
+# Train
+async def train():
+  global diffAngle
+  predictSerial()
+  if (not None and isinstance(diffAngle, np.ndarray)):
+    data = {
+      'type': 'train',
+      'data': diffAngle.tolist()
+    }
+    await ws.send(json.dumps(data))
 
 # Default
 def default():
@@ -69,7 +114,8 @@ def default():
 async def action(operation):
   actionDict = {
     # 'readSerial': readSerial,
-    'initAngle': initAngle
+    'init': init,
+    'train': train
   }
   await actionDict.get(operation, default)()
 
@@ -77,7 +123,6 @@ async def action(operation):
 async def handle_client(websocket):
   global ws
   ws = websocket
-  print(ws)
   readSerialThread = threading.Thread(target=readSerial)
   readSerialThread.start()
   while True:
