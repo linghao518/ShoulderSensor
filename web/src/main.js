@@ -1,6 +1,7 @@
 import Vue from 'vue'
 import App from './App.vue'
 import VueNativeSock from 'vue-native-websocket'
+import '@/styles/index.scss'
 
 Vue.config.productionTip = false
 
