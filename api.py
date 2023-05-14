@@ -28,6 +28,7 @@ sensorDeqStd = None
 initAngle = None
 diffAngle = None
 ws = None
+training = False
 
 # 根据模型预测数据
 def predictSerial():
@@ -97,14 +98,24 @@ async def init():
 
 # Train
 async def train():
-  global diffAngle
-  predictSerial()
-  if (not None and isinstance(diffAngle, np.ndarray)):
-    data = {
-      'type': 'train',
-      'data': diffAngle.tolist()
-    }
-    await ws.send(json.dumps(data))
+  global training
+  training = True
+  await doTrain()
+
+async def doTrain():
+  global training
+
+  while training:
+    global diffAngle
+    predictSerial()
+    if (not None and isinstance(diffAngle, np.ndarray)):
+      data = {
+        'type': 'train',
+        'data': diffAngle.tolist()
+      }
+      await ws.send(json.dumps(data))
+      time.sleep(0.1)
+  
 
 # Default
 def default():

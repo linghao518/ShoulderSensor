@@ -1,11 +1,13 @@
 <template>
   <div id="app">
-    <div class="human">
-      <div class="human__front">
-        <img class="human__front__body" :src="require('@/assets/body-front-1.svg')" />
-        <img class="human__front__arm" :style="`transform: rotate(-${armDeg}deg)`" :src="require('@/assets/body-front-2.svg')" />
-      </div>
+    <div class="test-data">
+      <div>初始化<input v-model.number="initData[0]" /><input v-model.number="initData[1]" /><input v-model.number="initData[2]" /><input v-model.number="initData[3]" /><input v-model.number="initData[4]" /><input v-model.number="initData[5]" /></div>
+      <div>训练<input v-model.number="trainData[0]" /><input v-model.number="trainData[1]" /><input v-model.number="trainData[2]" /><input v-model.number="trainData[3]" /><input v-model.number="trainData[4]" /><input v-model.number="trainData[5]" /></div>
+      <button @click="mockInit">Init</button>
+      <button @click="mockTrain">Train</button>
+      <button @click="next">Next</button>
     </div>
+    <HumanBody :initData="initData" :trainData="trainData" :view="view" />
     <div class="left-buttons">
       <button><img :src="require('@/assets/icon-close.svg')" /></button>
       <button class="left-buttons__equal"><img :src="require('@/assets/icon-equal.svg')" /></button>
@@ -42,18 +44,17 @@
     </div>
     <div class="current-pose">
       <button><img :src="require('@/assets/icon-arrow-down.svg')" /></button>
-      <span>当前动作：右臂外展{{armDeg}}˚</span>
+      <span>当前动作：{{taskList[currentTaskIndex].action}}{{armDeg}}˚</span>
       <span>持续 {{seconds}}s</span>
     </div>
 
     <div class="task-panel right-panel">
       <div class="right-panel__title">康复动作(共5组)<img :src="require('@/assets/icon-pause.svg')" /></div>
       <div class="task-panel__body">
-        <div class="task-panel__item active">右臂外展60˚<img :src="require('@/assets/icon-task-active.svg')" /></div>
-        <div class="task-panel__item">右臂前伸45˚</div>
-        <div class="task-panel__item">右臂后伸30˚</div>
-        <div class="task-panel__item">右臂外展45˚、前伸30˚</div>
-        <div class="task-panel__item">右臂外展45˚、后伸15˚</div>
+        <div v-for="(task, index) in taskList" :key="task.title" class="task-panel__item" :class="{'active': index === currentTaskIndex}">
+          {{task.title}}
+          <img v-if="index === currentTaskIndex" :src="require('@/assets/icon-task-active.svg')" />
+        </div>
       </div>
     </div>
 
@@ -73,43 +74,75 @@
       </div>
     </div>
     <div class="thumbnails">
-      <div class="thumbnails__item" @click="view = index" v-for="index in 3" :key="index" :class="{'active': view === index}"></div>
-    </div>
-    <!-- <div class="screen">
-      <div class="body">
-        <div class="arm" ></div>
+      <div class="thumbnails__item" @click="view = index" v-for="index in 3" :key="index" :class="{'active': view === index}">
+        <HumanBodyFront v-if="index === 1" :initData="initData" :trainData="trainData" :type="3" />
+        <HumanBodySide v-if="index === 2" :initData="initData" :trainData="trainData" :type="3" />
+        <img v-if="index === 3" class="thumbnails__item__bodyback" :src="require('@/assets/body-back.svg')" />
       </div>
     </div>
-    <p>{{ this.initData }}</p>
-    <p>{{ this.trainData }}</p>
-     --><div>
-      <button @click="init">init</button>
-      <button @click="train">train</button>
+    <div class="success-dialog" v-if="success">
+      <img :src="require('@/assets/success.svg')" />
+      <div class="success-dialog__text">顺利完成第{{this.currentTaskIndex + 1}}个动作，离康复又近了一步！</div>
+      <div class="success-dialog__restart" @click="restart"></div>
+      <div class="success-dialog__next" @click="next"></div>
     </div>
   </div>
 </template>
 
 <script>
+import HumanBody from './HumanBody/index.vue'
+import HumanBodyFront from './HumanBody/Front.vue'
+import HumanBodySide from './HumanBody/Side.vue'
 
 export default {
-  name: 'App',
+  name: 'MyApp',
+  components: {
+    HumanBody,
+    HumanBodyFront,
+    HumanBodySide
+  },
   data() {
     return {
-      initData: [],
-      trainData: [],
+      taskList: [
+        {
+          title: '右臂外展60˚',
+          action: '右臂外展'
+        },{
+          title: '右臂前伸45˚',
+          action: '右臂前伸'
+        },{
+          title: '右臂后伸30˚',
+        },{
+          title: '右臂外展45˚、前伸30˚',
+        },{
+          title: '右臂外展45˚、后伸15˚',
+        },
+      ],
+      initData: [0,0,0,0,0,0],
+      trainData: [0,0,0,0,0,0],
       armDeg: 0,
       starTime: null,
       timeInterval: null,
       seconds: 0,
       time: '00:00',
       count: 0,
-      view: 1
+      view: 1,
+      currentTaskIndex: 0,
+      success: false
     }
   },
   mounted() {
     this.$options.sockets.onmessage = this.handleMessage
     this.$options.sockets.onopen = () => {
       setTimeout(this.init, 3000)
+    }
+  },
+  watch: {
+    trainData: {
+      handler() {
+        this.trainCb()
+      },
+      deep: true
     }
   },
   methods: {
@@ -121,13 +154,44 @@ export default {
       this.starTime = new Date().getTime()
       this.timeInterval = setInterval(this.getTime, 1000)
     },
+    trainCb() {
+      if (this.currentTaskIndex == 0) {
+        const res = Math.floor(this.initData[4] + this.trainData[4])
+        this.armDeg = res
+        if (Math.abs(res - 60) < 2 && this.trainData[0] <= 5) {
+          this.success = true
+        }
+      }
+      if (this.currentTaskIndex == 1) {
+        const res = Math.floor(this.initData[5] + this.trainData[5])
+        this.armDeg = res
+        if (Math.abs(res - 45) < 2 && this.trainData[0] <= 5) {
+          this.success = true
+        }
+      }
+    },
+    restart() {
+      this.count = 0
+      this.success = false
+    },
+    next() {
+      this.count = 0
+      this.success = false
+      if (this.currentTaskIndex == 0) {
+        this.currentTaskIndex = 1
+        this.view = 2
+      } else {
+        this.currentTaskIndex = 0
+        this.view = 1
+      }
+    },
     getTime() {
       const seconds = Math.floor((new Date().getTime() - this.starTime) / 1000)
       const minutes = Math.floor(seconds / 60)
       const remainingSeconds = seconds % 60
       this.seconds = seconds
       this.time = `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`
-      if (this.trainData[0] * 100 * Math.random() > 0) {
+      if (this.trainData[0] > 5) {
         this.count ++
       }
     },
@@ -139,10 +203,20 @@ export default {
           this.train()
           break
         case 'train':
-          this.trainData = msg.data
-          this.armDeg = Math.floor(this.trainData[0] * 100 * Math.random() + this.initData[0])
+          // this.trainData = msg.data
+          // this.armDeg = Math.floor(this.trainData[0] * 100 * Math.random() + this.initData[0])
+          // this.sektor.animateTo(this.armDeg)
           break
       }
+    },
+    mockTrain() {
+      this.trainData = [this.mockData(), this.mockData(), this.mockData(), this.mockData(), this.mockData(), this.mockData()]
+    },
+    mockData() {
+      return Math.floor(Math.random() * 10)
+    },
+    mockInit() {
+      this.initData = [34.79999923706055, 7.800000190734863, 34.900001525878906, 7.699999809265137, 28.399999618530273, 28]
     }
   }
 }
@@ -156,6 +230,7 @@ export default {
   background: #F7F6FB;
   border-radius: 5px;
   overflow: hidden;
+  font-family: Arial, Helvetica, sans-serif;
 }
 
 .screen {
@@ -177,48 +252,6 @@ export default {
   background: #ffcc00;
   transform: rotate(10deg);
   transform-origin: 25px 25px;
-}
-
-.human {
-  position: absolute;
-  top: 200px;
-  left: 450px;
-
-  &__front {
-    position: relative;
-    &__body {
-      width: 340px;
-    }
-
-    &__arm {
-      position: absolute;
-      width: 114px;
-      top: 186px;
-      left: 272px;
-      transform: rotate(-60deg);
-      transform-origin: 25px 25px;
-    }
-
-    &__circle {
-      position: relative;
-      width: 200px;
-      height: 200px;
-      overflow: hidden;
-
-      &::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 50%;
-        width: 100%;
-        height: 100%;
-        background-color: #3498db;
-        border-radius: 0 100% 100% 0 / 50%;
-        transform-origin: left;
-        transform: rotate(60deg); /* 修改此值以调整扇形的大小 */
-      }
-    }
-  }
 }
 
 .left-buttons {
@@ -390,7 +423,7 @@ export default {
 
   &__num {
     display: inline-block;
-    background: #FF8300;
+    background: #7564E6;
     border-radius: 25px;
     font-size: 50px;
     font-weight: bold;
@@ -403,7 +436,7 @@ export default {
     position: relative;
     top: -5px;
     font-weight: bold;
-    color: #FF8300;
+    color: #7564E6;
     margin-left: 10px;
   }
 }
@@ -472,6 +505,56 @@ export default {
     &.active {
       background: #f7f6fb;
     }
+
+    &__bodyback {
+      position: absolute;
+      height: 85%;
+      left: 45px;
+      top: 16px;
+    }
   }
+}
+
+.success-dialog {
+  position: absolute;
+  z-index: 17;
+  width: 530px;
+  left: 400px;
+  top: 149px;
+
+  &__text {
+    position: absolute;
+    top: 319px;
+    left: 142px;
+    font-size: 22px;
+    white-space: nowrap;
+  }
+
+  &__restart, &__next {
+    position: absolute;
+    width: 110px;
+    height: 110px;
+    left: 200px;
+    top: 200px;
+    cursor: pointer;
+  }
+  
+  &__restart {
+    left: 176px;
+    top: 380px;
+  }
+  
+  &__next {
+    left: 371px;
+    top: 380px;
+  }
+}
+
+.test-data {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  background: #fff;
+  font-size: 12px;
 }
 </style>
