@@ -2,6 +2,7 @@
   <div class="human__front" :class="`type-${type}`">
     <div class="human__front__wrap">
       <div v-if="type !== 2" ref="circle" class="human__front__circle"></div>
+      <img v-if="type !== 2" class="human__front__circle__arrow" :src="require('@/assets/icon-white-arrow-right.svg')" />
       <img class="human__front__body" :src="require('@/assets/body-front-1.svg')" />
       <img v-if="type !== 2" class="human__front__arm" :style="`transform: rotate(-${realArmDeg}deg)`" :src="require('@/assets/body-front-2.svg')" />
       <img v-else class="human__front__arm" :style="`transform: rotate(-${realArmDeg}deg) translateY(-${comDeg * 2}px)`" :src="require('@/assets/body-front-2.svg')" />
@@ -166,6 +167,13 @@ export default {
       top: -91px;
       left: -11px;
       transform: rotateX(180deg);
+
+      &__arrow {
+        position: absolute;
+        width: 49px;
+        top: 417px;
+        left: 300px;
+      }
     }
 
     &__baseline, &__redline {

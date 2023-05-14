@@ -191,7 +191,7 @@ export default {
       const remainingSeconds = seconds % 60
       this.seconds = seconds
       this.time = `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`
-      if (this.trainData[0] > 5) {
+      if (this.trainData[0] > 5 || this.trainData[2] > 5) {
         this.count ++
       }
     },

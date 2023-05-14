@@ -1,22 +1,30 @@
 <template>
-  <div class="human__side" :class="[armDeg > 0 ? 'human__side--left' : 'human__side--right', `type-${type}`]">
+  <div class="human__side" :class="[armDeg > 0 ? 'human__side--left' : 'human__side--right', `type-${type}`, `comtype-${comType}`]">
     <div class="human__side__wrap">
       <div v-if="type !== 2" ref="circle" class="human__side__circle" :style="circleRoate"></div>
+      <img v-if="type !== 2" class="human__side__circle__arrow" :src="require('@/assets/icon-white-arrow-left.svg')" />
       <img class="human__side__body" :src="require('@/assets/body-side-1.svg')" />
       <img v-if="type !== 2" class="human__side__arm" :style="`transform: rotate(${realArmDeg}deg)`" :src="require('@/assets/body-side-2.svg')" />
-      <img v-else class="human__side__arm" :style="`transform: rotate(${realArmDeg}deg) translateY(-${comDeg * 0.5}px)`" :src="require('@/assets/body-side-2.svg')" />
-      <img v-if="type === 2" class="human__side__band" :src="require('@/assets/body-side-3.svg')" :style="`transform: scaleY(${comDegScale})`" />
+      <template v-else>
+        <img v-if="comType === 1" class="human__side__arm" :style="`transform: rotate(${realArmDeg}deg) translateY(-${comDeg * 0.5}px)`" :src="require('@/assets/body-side-2.svg')" />
+        <img v-if="comType === 2" class="human__side__arm" :style="`transform: rotate(${realArmDeg}deg) translateX(-${comDeg * 1.5}px)`" :src="require('@/assets/body-side-2.svg')" />
+      </template>
+      <img v-if="type === 2 && comType === 1" class="human__side__band" :src="require('@/assets/body-side-3.svg')" :style="`transform: scaleY(${comDegScale})`" />
       <div v-if="type === 2" class="human__side__focus"></div>
       <div v-if="type === 2" class="human__side__focus2"></div>
+
+      <div v-if="comType === 2" class="human__side__baseline2"></div>
+      <div v-if="type === 2 && comType === 2" class="human__side__redline2" :style="`transform: translateX(-${comDeg * 1.5}px)`"></div>
     </div>
     <div class="human__side__extra" v-if="type !== 2">
       <div v-if="type === 1" class="human__side__title">正确姿势</div>
       <div class="human__side__deg">{{armDeg}}˚</div>
     </div>
     <div class="human__side__extra" v-else>
-      <div class="human__side__baseline"></div>
-      <div v-if="comDeg" class="human__side__redline" :style="`transform: translateY(-${comDeg * 2}px)`"></div>
-      <img class="human__side__redarrow" :src="require('@/assets/icon-red-arrow-up.svg')" />
+      <div v-if="comType === 1" class="human__side__baseline"></div>
+      <div v-if="comType === 1" class="human__side__redline" :style="`transform: translateY(-${comDeg * 2}px)`"></div>
+      <img v-if="comType === 1" class="human__side__redarrow" :src="require('@/assets/icon-red-arrow-up.svg')" />
+      <img v-if="comType === 2" class="human__side__redarrowleft" :src="require('@/assets/icon-red-arrow-left.svg')" />
       <div class="human__side__title">{{comType === 1 ? '发生肩部上提代偿' : '发生肩胛骨外展代偿'}}</div>
       <div class="human__side__comdeg">{{comDeg}}˚</div>
     </div>
@@ -105,6 +113,7 @@ export default {
       transition: 300ms;
       top: 50px;
       left: 443px;
+      transform-origin: 100px 400px;
     }
 
     &__body {
@@ -181,6 +190,13 @@ export default {
       top: -134px;
       left: -155px;
       transform: rotateX(180deg);
+
+      &__arrow {
+        position: absolute;
+        width: 49px;
+        top: 358px;
+        left: -32px;
+      }
     }
 
     &__baseline, &__redline {
@@ -196,9 +212,28 @@ export default {
       border-top: 2px dashed #FF0000;
     }
 
+    &__baseline2, &__redline2 {
+      height: 170px;
+      border-left: 2px dashed #7564E6;
+      position: absolute;
+      top: 100px;
+      left: 129px;
+      z-index: 14;
+    }
+
+    &__redline2 {
+      border-left: 2px dashed #FF0000;
+    }
+
     &__redarrow {
       position: absolute;
       top: 139px;
+      right: 70px;
+    }
+
+    &__redarrowleft {
+      position: absolute;
+      top: 212px;
       right: 70px;
     }
 
@@ -294,6 +329,12 @@ export default {
 
     .human__side__circle, .human__side__extra {
       display: none;
+    }
+  }
+
+  .comtype-2 {
+    .human__side__focus, .human__side__focus2 {
+      top: 120px;
     }
   }
 </style>
