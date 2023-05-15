@@ -1,8 +1,8 @@
 <template>
-  <div class="human__side" :class="[armDeg > 0 ? 'human__side--left' : 'human__side--right', `type-${type}`, `comtype-${comType}`]">
+  <div class="human__side" :style="`transform: scale(${zoomScale})`" :class="[armDeg > 0 ? 'human__side--left' : 'human__side--right', `type-${type}`, `comtype-${comType}`]">
     <div class="human__side__wrap">
       <div v-if="type !== 2" ref="circle" class="human__side__circle" :style="circleRoate"></div>
-      <img v-if="type !== 2" class="human__side__circle__arrow" :src="require('@/assets/icon-white-arrow-left.svg')" />
+      <img v-if="type !== 2 && armDeg > 0" class="human__side__circle__arrow" :src="require('@/assets/icon-white-arrow-left.svg')" />
       <img class="human__side__body" :src="require('@/assets/body-side-1.svg')" />
       <img v-if="type !== 2" class="human__side__arm" :style="`transform: rotate(${realArmDeg}deg)`" :src="require('@/assets/body-side-2.svg')" />
       <template v-else>
@@ -40,6 +40,7 @@ export default {
     initData: Array,
     trainData: Array,
     type: Number,
+    zoom: Number
   },
   data() {
     return {
@@ -90,6 +91,9 @@ export default {
         return 'transform: rotate(180deg);top: -143px;left: -164px;'
       }
       return 'transform: rotateX(180deg);top: -134px;left: -155px;'
+    },
+    zoomScale() {
+      return 1 + (this.zoom - 30) / 100 * 2
     }
   },
   watch: {
@@ -113,7 +117,6 @@ export default {
       transition: 300ms;
       top: 50px;
       left: 443px;
-      transform-origin: 100px 400px;
     }
 
     &__body {

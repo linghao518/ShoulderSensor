@@ -1,10 +1,13 @@
 import Vue from 'vue'
 import App from './App.vue'
+import ElementUI from 'element-ui'
 import VueNativeSock from 'vue-native-websocket'
+import 'element-ui/lib/theme-chalk/index.css'
 import '@/styles/index.scss'
 
 Vue.config.productionTip = false
 
+Vue.use(ElementUI)
 Vue.use(VueNativeSock, 'ws://localhost:8765', {
   // 以下选项为可选
   connectManually: false, // 如果设置为 true，则需要手动连接 WebSocket，默认为 false

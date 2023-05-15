@@ -226,6 +226,7 @@ export default {
 #app {
   position: relative;
   width: 1600px;
+  min-width: 1600px;
   height: 900px;
   background: #F7F6FB;
   border-radius: 5px;

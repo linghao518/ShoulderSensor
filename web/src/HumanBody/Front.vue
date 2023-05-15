@@ -1,8 +1,8 @@
 <template>
-  <div class="human__front" :class="`type-${type}`">
+  <div class="human__front" :style="`transform: scale(${zoomScale})`" :class="`type-${type}`">
     <div class="human__front__wrap">
       <div v-if="type !== 2" ref="circle" class="human__front__circle"></div>
-      <img v-if="type !== 2" class="human__front__circle__arrow" :src="require('@/assets/icon-white-arrow-right.svg')" />
+      <img v-if="type !== 2 && armDeg > 0" class="human__front__circle__arrow" :src="require('@/assets/icon-white-arrow-right.svg')" />
       <img class="human__front__body" :src="require('@/assets/body-front-1.svg')" />
       <img v-if="type !== 2" class="human__front__arm" :style="`transform: rotate(-${realArmDeg}deg)`" :src="require('@/assets/body-front-2.svg')" />
       <img v-else class="human__front__arm" :style="`transform: rotate(-${realArmDeg}deg) translateY(-${comDeg * 2}px)`" :src="require('@/assets/body-front-2.svg')" />
@@ -36,6 +36,7 @@ export default {
     initData: Array,
     trainData: Array,
     type: Number,
+    zoom: Number
   },
   data() {
     return {
@@ -60,6 +61,9 @@ export default {
     },
     comDegScale() {
       return 1 + this.comDeg / 100
+    },
+    zoomScale() {
+      return 1 + (this.zoom - 30) / 100 * 2
     }
   },
   watch: {
@@ -234,7 +238,7 @@ export default {
     .human__front__wrap {
       transform: scale(0.8);
       position: relative;
-      top: 86px;
+      top: 87px;
       left: 0;
     }
   }

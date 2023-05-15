@@ -1,19 +1,25 @@
 <template>
   <div class="human">
+    <el-slider
+      class="human__zoomslider"
+      v-model="zoom"
+      vertical
+      height="170px">
+    </el-slider>
     <template v-if="view === 1">
       <transition name="fade">
-        <HumanBodyFront :initData="initData" :trainData="trainData" :type="trainData && trainData[0] > 5 ? 1 : 0" />
+        <HumanBodyFront :initData="initData" :trainData="trainData" :zoom="zoom" :type="trainData && trainData[0] > 5 ? 1 : 0" />
       </transition>
       <transition name="fade">
-        <HumanBodyFront v-show="trainData && trainData[0] > 5" :initData="initData" :trainData="trainData" :type="2" />
+        <HumanBodyFront v-show="trainData && trainData[0] > 5" :initData="initData" :trainData="trainData" :zoom="zoom" :type="2" />
       </transition>
     </template>
     <template v-if="view === 2">
       <transition name="fade">
-        <HumanBodySide :initData="initData" :trainData="trainData" :type="(trainData && trainData[0] > 5) || (trainData && trainData[2] > 5) ? 1 : 0" />
+        <HumanBodySide :initData="initData" :trainData="trainData" :zoom="zoom" :type="(trainData && trainData[0] > 5) || (trainData && trainData[2] > 5) ? 1 : 0" />
       </transition>
       <transition name="fade">
-        <HumanBodySide v-show="(trainData && trainData[0] > 5) || (trainData && trainData[2] > 5)" :initData="initData" :trainData="trainData" :type="2" />
+        <HumanBodySide v-show="(trainData && trainData[0] > 5) || (trainData && trainData[2] > 5)" :initData="initData" :trainData="trainData" :zoom="zoom" :type="2" />
       </transition>
     </template>
   </div>
@@ -35,6 +41,11 @@ export default {
   components: {
     HumanBodyFront,
     HumanBodySide
+  },
+  data() {
+    return {
+      zoom: 30
+    }
   }
 }
 </script>
@@ -46,6 +57,22 @@ export default {
   background-size: 100% auto;
   width: 855px;
   height: 745px;
+
+  .human__zoomslider {
+    position: absolute;
+    top: 500px;
+    z-index: 18;
+
+    ::v-deep {
+      .el-slider__button {
+        border: 2px solid #FF9D48;
+        background-color: #FF9D48;
+      }
+      .el-slider__bar, .el-slider__runway {
+        background-color: #E3E3E3;
+      }
+    }
+  }
 }
 .fade-enter-active, .fade-leave-active {
   transition: opacity .5s;
