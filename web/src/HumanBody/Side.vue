@@ -1,29 +1,33 @@
 <template>
-  <div class="human__side" :style="`transform: scale(${zoomScale})`" :class="[armDeg > 0 ? 'human__side--left' : 'human__side--right', `type-${type}`, `comtype-${comType}`]">
-    <div class="human__side__wrap">
-      <div v-if="type !== 2" ref="circle" class="human__side__circle" :style="circleRoate"></div>
-      <img v-if="type !== 2 && armDeg > 0" class="human__side__circle__arrow" :src="require('@/assets/icon-white-arrow-left.svg')" />
-      <img class="human__side__body" :src="require('@/assets/body-side-1.svg')" />
-      <img v-if="type !== 2" class="human__side__arm" :style="`transform: rotate(${realArmDeg}deg)`" :src="require('@/assets/body-side-2.svg')" />
-      <template v-else>
-        <img v-if="comType === 1" class="human__side__arm" :style="`transform: rotate(${realArmDeg}deg) translateY(-${comDeg * 0.5}px)`" :src="require('@/assets/body-side-2.svg')" />
-        <img v-if="comType === 2" class="human__side__arm" :style="`transform: rotate(${realArmDeg}deg) translateX(-${comDeg * 1.5}px)`" :src="require('@/assets/body-side-2.svg')" />
-      </template>
-      <img v-if="type === 2 && comType === 1" class="human__side__band" :src="require('@/assets/body-side-3.svg')" :style="`transform: scaleY(${comDegScale})`" />
-      <div v-if="type === 2" class="human__side__focus"></div>
-      <div v-if="type === 2" class="human__side__focus2"></div>
+  <div class="human__side" :class="[armDeg > 0 ? 'human__side--left' : 'human__side--right', `type-${type}`, `comtype-${comType}`]">
+    <div class="human__side__mask">
+      <div class="human__side__scacle" :style="`transform: scale(${zoomScale})`">
+        <div class="human__side__wrap">
+          <div v-if="type !== 2" ref="circle" class="human__side__circle" :style="circleRoate"></div>
+          <img v-if="type !== 2 && armDeg > 0" class="human__side__circle__arrow" :src="require('@/assets/icon-white-arrow-left.svg')" />
+          <img class="human__side__body" :src="require('@/assets/body-side-1.svg')" />
+          <img v-if="type !== 2" class="human__side__arm" :style="`transform: rotate(${realArmDeg}deg)`" :src="require('@/assets/body-side-2.svg')" />
+          <template v-else>
+            <img v-if="comType === 1" class="human__side__arm" :style="`transform: rotate(${realArmDeg}deg) translateY(-${comDeg * 0.5}px)`" :src="require('@/assets/body-side-2.svg')" />
+            <img v-if="comType === 2" class="human__side__arm" :style="`transform: rotate(${realArmDeg}deg) translateX(-${comDeg * 1.5}px)`" :src="require('@/assets/body-side-2.svg')" />
+          </template>
+          <img v-if="type === 2 && comType === 1" class="human__side__band" :src="require('@/assets/body-side-3.svg')" :style="`transform: scaleY(${comDegScale})`" />
+          <div v-if="type === 2" class="human__side__focus"></div>
+          <div v-if="type === 2" class="human__side__focus2"></div>
 
-      <div v-if="comType === 2" class="human__side__baseline2"></div>
-      <div v-if="type === 2 && comType === 2" class="human__side__redline2" :style="`transform: translateX(-${comDeg * 1.5}px)`"></div>
+          <div v-if="comType === 2" class="human__side__baseline2"></div>
+          <div v-if="type === 2 && comType === 2" class="human__side__redline2" :style="`transform: translateX(-${comDeg * 1.5}px)`"></div>
+        </div>
+      </div>
     </div>
     <div class="human__side__extra" v-if="type !== 2">
       <div v-if="type === 1" class="human__side__title">正确姿势</div>
-      <div class="human__side__deg">{{armDeg}}˚</div>
+      <div class="human__side__deg" :style="degbg">{{armDeg}}˚</div>
     </div>
     <div class="human__side__extra" v-else>
-      <div v-if="comType === 1" class="human__side__baseline"></div>
-      <div v-if="comType === 1" class="human__side__redline" :style="`transform: translateY(-${comDeg * 2}px)`"></div>
-      <img v-if="comType === 1" class="human__side__redarrow" :src="require('@/assets/icon-red-arrow-up.svg')" />
+      <div v-if="zoom === 30 && comType === 1" class="human__side__baseline"></div>
+      <div v-if="zoom === 30 && comType === 1" class="human__side__redline" :style="`transform: translateY(-${comDeg * 2}px)`"></div>
+      <img v-if="zoom === 30 && comType === 1" class="human__side__redarrow" :src="require('@/assets/icon-red-arrow-up.svg')" />
       <img v-if="comType === 2" class="human__side__redarrowleft" :src="require('@/assets/icon-red-arrow-left.svg')" />
       <div class="human__side__title">{{comType === 1 ? '发生肩部上提代偿' : '发生肩胛骨外展代偿'}}</div>
       <div class="human__side__comdeg">{{comDeg}}˚</div>
@@ -40,16 +44,20 @@ export default {
     initData: Array,
     trainData: Array,
     type: Number,
-    zoom: Number
+    zoom: Number,
+    waiting: Boolean,
   },
   data() {
     return {
-      sektor: null
+      sektor: null,
+      degbg: null,
+      degbgAnimation: null, 
+      time: -50
     }
   },
   mounted() {
     const circle = this.$refs.circle
-    this.sektor = new Sektor(circle, { angle: this.armDeg })
+    this.sektor = circle && new Sektor(circle, { angle: this.armDeg })
   },
   computed: {
     armDeg() {
@@ -93,12 +101,32 @@ export default {
       return 'transform: rotateX(180deg);top: -134px;left: -155px;'
     },
     zoomScale() {
+      if (this.type === 2) {
+        return 1
+      }
       return 1 + (this.zoom - 30) / 100 * 2
     }
   },
   watch: {
     armDeg(deg) {
-      this.sektor.animateTo(Math.abs(deg))
+      this.sektor && this.sektor.animateTo(Math.abs(deg))
+    },
+    waiting(val) {
+      if (val) {
+        this.time = -50
+        this.degbgAnimation = setInterval(() => {
+          if (this.time < 60) {
+            this.time ++
+            this.degbg = `background: linear-gradient(90deg, #FF9D48 ${this.time}%, #FFFFFF ${this.time + 50}%);`
+          } else {
+            this.degbg = 'background: #ADE664;'
+            clearInterval(this.degbgAnimation)
+          }
+        }, 20)
+      } else {
+        clearInterval(this.degbgAnimation)
+        this.degbg = null
+      }
     }
   }
 }
@@ -111,6 +139,17 @@ export default {
     background: url('../assets/body-bg.svg') no-repeat top center;
     width: 100%;
     height: 100%;
+
+    &__mask {
+      width: 100%;
+      height: 150%;
+      overflow: hidden;
+    }
+
+    &__scacle {
+      transform-origin: 453px 300px;
+      transition: 100ms;
+    }
 
     &__wrap {
       position: absolute;
@@ -257,7 +296,7 @@ export default {
       width: 131px;
       height: 131px;
       border-radius: 200%;
-      background: #FFF900;
+      background: #E66464;
       z-index: 1;
       left: 70px;
       top: 58px;
@@ -287,6 +326,10 @@ export default {
   .type-1 {
     left: 0;
 
+    .human__side__scacle {
+      transform-origin: 299px 300px;
+    }
+
     .human__side__title {
       background: #7564E6;
       color: #fff;
@@ -306,7 +349,8 @@ export default {
     background: #fff url('../assets/body-bg.svg') no-repeat center center;
     
     .human__side__title {
-      background: #FFF900;
+      background: #E66464;
+      color: #fff;
     }
 
     .human__side__comdeg {

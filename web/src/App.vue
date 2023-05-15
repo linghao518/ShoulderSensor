@@ -1,5 +1,9 @@
 <template>
   <div id="app">
+    <div class="left-buttons">
+      <button><img :src="require('@/assets/icon-close.svg')" /></button>
+      <button class="left-buttons__equal" :class="{'active': step === 2}"><img :src="require('@/assets/icon-equal.svg')" /></button>
+    </div>
     <div class="test-data">
       <div>初始化<input v-model.number="initData[0]" /><input v-model.number="initData[1]" /><input v-model.number="initData[2]" /><input v-model.number="initData[3]" /><input v-model.number="initData[4]" /><input v-model.number="initData[5]" /></div>
       <div>训练<input v-model.number="trainData[0]" /><input v-model.number="trainData[1]" /><input v-model.number="trainData[2]" /><input v-model.number="trainData[3]" /><input v-model.number="trainData[4]" /><input v-model.number="trainData[5]" /></div>
@@ -7,85 +11,91 @@
       <button @click="mockTrain">Train</button>
       <button @click="next">Next</button>
     </div>
-    <HumanBody :initData="initData" :trainData="trainData" :view="view" />
-    <div class="left-buttons">
-      <button><img :src="require('@/assets/icon-close.svg')" /></button>
-      <button class="left-buttons__equal"><img :src="require('@/assets/icon-equal.svg')" /></button>
+    <div v-if="step === 1" class="step1">
+      <img class="step1__bg" :src="require('@/assets/step1.svg')" />
+      <img class="step1__cloth" :src="require('@/assets/step1-cloth.svg')" />
     </div>
-    <div v-if="false" class="progress">
-      <div class="progress__button"><img :src="require('@/assets/icon-arrow-left.svg')" /></div>
-      <div class="progress__body">
-        <div class="progress__body__base">
-          <div class="progress__body__base__line"></div>
-          <div class="progress__body__base__rounds">
-            <i class="progress__body__base__rounds__round" />
-            <i class="progress__body__base__rounds__round" />
-            <i class="progress__body__base__rounds__round" />
-            <i class="progress__body__base__rounds__round" />
-            <i class="progress__body__base__rounds__round" />
-            <i class="progress__body__base__rounds__round" />
-            <i class="progress__body__base__rounds__round" />
-            <i class="progress__body__base__rounds__round" />
+    <transition name="fade">
+      <div v-if="step === 2">
+        <HumanBody :initData="initData" :trainData="trainData" :view="view" :waiting="waiting" />
+        <div v-if="false" class="progress">
+          <div class="progress__button"><img :src="require('@/assets/icon-arrow-left.svg')" /></div>
+          <div class="progress__body">
+            <div class="progress__body__base">
+              <div class="progress__body__base__line"></div>
+              <div class="progress__body__base__rounds">
+                <i class="progress__body__base__rounds__round" />
+                <i class="progress__body__base__rounds__round" />
+                <i class="progress__body__base__rounds__round" />
+                <i class="progress__body__base__rounds__round" />
+                <i class="progress__body__base__rounds__round" />
+                <i class="progress__body__base__rounds__round" />
+                <i class="progress__body__base__rounds__round" />
+                <i class="progress__body__base__rounds__round" />
+              </div>
+            </div>
+
+            <div class="progress__body__active">
+              <div class="progress__body__active__line"></div>
+              <div class="progress__body__active__rounds">
+                <i class="progress__body__active__rounds__round" />
+                <i class="progress__body__active__rounds__round" />
+                <i class="progress__body__active__rounds__round" />
+              </div>
+            </div>
+
+            <i class="progress__body__current" />
+          </div>
+          <div class="progress__button"><img :src="require('@/assets/icon-arrow-right.svg')" /></div>
+        </div>
+        <div class="current-pose">
+          <button><img :src="require('@/assets/icon-arrow-down.svg')" /></button>
+          <span>当前动作：{{taskList[currentTaskIndex].title}}˚</span>
+          <span>持续 2s</span>
+        </div>
+
+        <div class="task-panel right-panel">
+          <div class="right-panel__title">康复动作(共5组)<img :src="require('@/assets/icon-pause.svg')" /></div>
+          <div class="task-panel__body">
+            <div v-for="(task, index) in taskList" :key="task.title" class="task-panel__item" :class="{'active': index === currentTaskIndex}">
+              {{task.title}}
+              <img v-if="index === currentTaskIndex" :src="require('@/assets/icon-task-active.svg')" />
+            </div>
           </div>
         </div>
 
-        <div class="progress__body__active">
-          <div class="progress__body__active__line"></div>
-          <div class="progress__body__active__rounds">
-            <i class="progress__body__active__rounds__round" />
-            <i class="progress__body__active__rounds__round" />
-            <i class="progress__body__active__rounds__round" />
+        <div class="data-panel right-panel">
+          <div class="right-panel__title">本次训练数据</div>
+          <div class="data-panel__item">
+            <span class="data-panel__num">{{count}}</span>
+            <span class="data-panel__text">次代偿</span>
+          </div>
+          <div class="data-panel__item">
+            <span class="data-panel__num">{{armDeg}}˚</span>
+            <span class="data-panel__text">当前角度</span>
+          </div>
+          <div class="data-panel__item">
+            <span class="data-panel__num">{{time}}</span>
+            <span class="data-panel__text">康复时长</span>
           </div>
         </div>
-
-        <i class="progress__body__current" />
-      </div>
-      <div class="progress__button"><img :src="require('@/assets/icon-arrow-right.svg')" /></div>
-    </div>
-    <div class="current-pose">
-      <button><img :src="require('@/assets/icon-arrow-down.svg')" /></button>
-      <span>当前动作：{{taskList[currentTaskIndex].action}}{{armDeg}}˚</span>
-      <span>持续 {{seconds}}s</span>
-    </div>
-
-    <div class="task-panel right-panel">
-      <div class="right-panel__title">康复动作(共5组)<img :src="require('@/assets/icon-pause.svg')" /></div>
-      <div class="task-panel__body">
-        <div v-for="(task, index) in taskList" :key="task.title" class="task-panel__item" :class="{'active': index === currentTaskIndex}">
-          {{task.title}}
-          <img v-if="index === currentTaskIndex" :src="require('@/assets/icon-task-active.svg')" />
+        <div class="thumbnails">
+          <div class="thumbnails__item" @click="view = index" v-for="index in 3" :key="index" :class="{'active': view === index}">
+            <HumanBodyFront v-if="index === 1" :initData="initData" :trainData="trainData" :type="3" />
+            <HumanBodySide v-if="index === 2" :initData="initData" :trainData="trainData" :type="3" />
+            <img v-if="index === 3" class="thumbnails__item__bodyback" :src="require('@/assets/body-back.svg')" />
+          </div>
         </div>
+        <transition name="fade">
+          <div class="success-dialog" v-if="success">
+            <img :src="require('@/assets/success.svg')" />
+            <div class="success-dialog__text">顺利完成第{{this.currentTaskIndex + 1}}个动作，离康复又近了一步！</div>
+            <div class="success-dialog__restart" @click="restart"></div>
+            <div class="success-dialog__next" @click="next"></div>
+          </div>
+        </transition>
       </div>
-    </div>
-
-    <div class="data-panel right-panel">
-      <div class="right-panel__title">本次训练数据</div>
-      <div class="data-panel__item">
-        <span class="data-panel__num">{{count}}</span>
-        <span class="data-panel__text">次代偿</span>
-      </div>
-      <div class="data-panel__item">
-        <span class="data-panel__num">{{armDeg}}˚</span>
-        <span class="data-panel__text">当前角度</span>
-      </div>
-      <div class="data-panel__item">
-        <span class="data-panel__num">{{time}}</span>
-        <span class="data-panel__text">康复时长</span>
-      </div>
-    </div>
-    <div class="thumbnails">
-      <div class="thumbnails__item" @click="view = index" v-for="index in 3" :key="index" :class="{'active': view === index}">
-        <HumanBodyFront v-if="index === 1" :initData="initData" :trainData="trainData" :type="3" />
-        <HumanBodySide v-if="index === 2" :initData="initData" :trainData="trainData" :type="3" />
-        <img v-if="index === 3" class="thumbnails__item__bodyback" :src="require('@/assets/body-back.svg')" />
-      </div>
-    </div>
-    <div class="success-dialog" v-if="success">
-      <img :src="require('@/assets/success.svg')" />
-      <div class="success-dialog__text">顺利完成第{{this.currentTaskIndex + 1}}个动作，离康复又近了一步！</div>
-      <div class="success-dialog__restart" @click="restart"></div>
-      <div class="success-dialog__next" @click="next"></div>
-    </div>
+    </transition>
   </div>
 </template>
 
@@ -106,10 +116,8 @@ export default {
       taskList: [
         {
           title: '右臂外展60˚',
-          action: '右臂外展'
         },{
           title: '右臂前伸45˚',
-          action: '右臂前伸'
         },{
           title: '右臂后伸30˚',
         },{
@@ -128,7 +136,10 @@ export default {
       count: 0,
       view: 1,
       currentTaskIndex: 0,
-      success: false
+      success: false,
+      successTimeout: null,
+      waiting: false,
+      step: 1
     }
   },
   mounted() {
@@ -159,24 +170,38 @@ export default {
         const res = Math.floor(this.initData[4] + this.trainData[4])
         this.armDeg = res
         if (Math.abs(res - 60) < 2 && this.trainData[0] <= 5) {
-          this.success = true
+          this.waiting = true
+          this.successTimeout = setTimeout(() => {
+            this.success = true
+          }, 2500)
+        } else {
+          clearTimeout(this.successTimeout)
+          this.waiting = false
         }
       }
       if (this.currentTaskIndex == 1) {
         const res = Math.floor(this.initData[5] + this.trainData[5])
         this.armDeg = res
         if (Math.abs(res - 45) < 2 && this.trainData[0] <= 5) {
-          this.success = true
+          this.waiting = true
+          this.successTimeout = setTimeout(() => {
+            this.success = true
+          }, 2500)
+        } else {
+          clearTimeout(this.successTimeout)
+          this.waiting = false
         }
       }
     },
     restart() {
       this.count = 0
       this.success = false
+      this.waiting = false
     },
     next() {
       this.count = 0
       this.success = false
+      this.waiting = false
       if (this.currentTaskIndex == 0) {
         this.currentTaskIndex = 1
         this.view = 2
@@ -216,6 +241,7 @@ export default {
       return Math.floor(Math.random() * 10)
     },
     mockInit() {
+      this.step = 2
       this.initData = [34.79999923706055, 7.800000190734863, 34.900001525878906, 7.699999809265137, 28.399999618530273, 28]
     }
   }
@@ -425,7 +451,7 @@ export default {
   &__num {
     display: inline-block;
     background: #7564E6;
-    border-radius: 25px;
+    border-radius: 20px;
     font-size: 50px;
     font-weight: bold;
     color: #fff;
@@ -486,7 +512,7 @@ export default {
     position: relative;
     width: 145px;
     height: 180px;
-    border-radius: 45px;
+    border-radius: 20px;
     margin: 30px 12px;
 
     &:after {
@@ -519,16 +545,21 @@ export default {
 .success-dialog {
   position: absolute;
   z-index: 17;
-  width: 530px;
-  left: 400px;
-  top: 149px;
+  width: 550px;
+  left: 498px;
+  top: 240px;
+
+  img {
+    width: 100%;
+  }
 
   &__text {
     position: absolute;
-    top: 319px;
-    left: 142px;
-    font-size: 22px;
+    top: 256px;
+    left: 114px;
+    font-size: 18px;
     white-space: nowrap;
+    color: #231815;
   }
 
   &__restart, &__next {
@@ -541,13 +572,13 @@ export default {
   }
   
   &__restart {
-    left: 176px;
-    top: 380px;
+    left: 138px;
+    top: 299px;
   }
   
   &__next {
-    left: 371px;
-    top: 380px;
+    left: 298px;
+    top: 299px;
   }
 }
 
@@ -557,5 +588,35 @@ export default {
   right: 0;
   background: #fff;
   font-size: 12px;
+}
+
+.step1 {
+  &__bg {
+    width: 100%;
+  }
+
+  &__cloth {
+    position: absolute;
+    right: 367px;
+    top: 290px;
+    width: 274px;
+    animation: clothfade 1s alternate infinite;
+  }
+}
+
+@keyframes clothfade {
+  0% {
+   opacity: 10%;
+  }
+  100% {
+    opacity: 100%;
+  }
+}
+
+.fade-enter-active, .fade-leave-active {
+  transition: opacity .5s;
+}
+.fade-enter, .fade-leave-to /* .fade-leave-active below version 2.1.8 */ {
+  opacity: 0;
 }
 </style>

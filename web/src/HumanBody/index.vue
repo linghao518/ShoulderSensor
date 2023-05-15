@@ -1,25 +1,27 @@
 <template>
   <div class="human">
-    <el-slider
-      class="human__zoomslider"
-      v-model="zoom"
-      vertical
-      height="170px">
-    </el-slider>
+    <div @dblclick="dblclick">
+      <el-slider
+        class="human__zoomslider"
+        v-model="zoom"
+        vertical
+        height="170px">
+      </el-slider>
+    </div>
     <template v-if="view === 1">
       <transition name="fade">
-        <HumanBodyFront :initData="initData" :trainData="trainData" :zoom="zoom" :type="trainData && trainData[0] > 5 ? 1 : 0" />
+        <HumanBodyFront :initData="initData" :trainData="trainData" :zoom="zoom" :type="trainData && trainData[0] > 5 ? 1 : 0" :waiting="waiting" />
       </transition>
       <transition name="fade">
-        <HumanBodyFront v-show="trainData && trainData[0] > 5" :initData="initData" :trainData="trainData" :zoom="zoom" :type="2" />
+        <HumanBodyFront v-show="trainData && trainData[0] > 5" :initData="initData" :trainData="trainData" :zoom="zoom" :type="2" :waiting="waiting" />
       </transition>
     </template>
     <template v-if="view === 2">
       <transition name="fade">
-        <HumanBodySide :initData="initData" :trainData="trainData" :zoom="zoom" :type="(trainData && trainData[0] > 5) || (trainData && trainData[2] > 5) ? 1 : 0" />
+        <HumanBodySide :initData="initData" :trainData="trainData" :zoom="zoom" :type="(trainData && trainData[0] > 5) || (trainData && trainData[2] > 5) ? 1 : 0" :waiting="waiting" />
       </transition>
       <transition name="fade">
-        <HumanBodySide v-show="(trainData && trainData[0] > 5) || (trainData && trainData[2] > 5)" :initData="initData" :trainData="trainData" :zoom="zoom" :type="2" />
+        <HumanBodySide v-show="(trainData && trainData[0] > 5) || (trainData && trainData[2] > 5)" :initData="initData" :trainData="trainData" :zoom="zoom" :type="2" :waiting="waiting" />
       </transition>
     </template>
   </div>
@@ -37,6 +39,7 @@ export default {
       default: 1,
       type: Number
     },
+    waiting: Boolean
   },
   components: {
     HumanBodyFront,
@@ -45,6 +48,11 @@ export default {
   data() {
     return {
       zoom: 30
+    }
+  },
+  methods: {
+    dblclick() {
+      this.zoom = 30
     }
   }
 }

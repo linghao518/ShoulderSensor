@@ -1,26 +1,30 @@
 <template>
-  <div class="human__front" :style="`transform: scale(${zoomScale})`" :class="`type-${type}`">
-    <div class="human__front__wrap">
-      <div v-if="type !== 2" ref="circle" class="human__front__circle"></div>
-      <img v-if="type !== 2 && armDeg > 0" class="human__front__circle__arrow" :src="require('@/assets/icon-white-arrow-right.svg')" />
-      <img class="human__front__body" :src="require('@/assets/body-front-1.svg')" />
-      <img v-if="type !== 2" class="human__front__arm" :style="`transform: rotate(-${realArmDeg}deg)`" :src="require('@/assets/body-front-2.svg')" />
-      <img v-else class="human__front__arm" :style="`transform: rotate(-${realArmDeg}deg) translateY(-${comDeg * 2}px)`" :src="require('@/assets/body-front-2.svg')" />
-      <img class="human__front__cloth" :src="require('@/assets/body-front-3.svg')" />
-      <img v-if="type !== 2" class="human__front__band" :src="require('@/assets/body-front-4.svg')" />
-      <img v-else class="human__front__band2" :src="require('@/assets/body-front-5.svg')" :style="`transform: scaleY(${comDegScale})`" />
-      <img class="human__front__point" :src="require('@/assets/body-point.svg')" />
-      <div v-if="type === 2" class="human__front__focus"></div>
-      <div v-if="type === 2" class="human__front__focus2"></div>
+  <div class="human__front" :class="`type-${type}`">
+    <div class="human__front__mask">
+      <div class="human__front__scacle" :style="`transform: scale(${zoomScale})`">
+        <div class="human__front__wrap">
+          <div v-if="type !== 2" ref="circle" class="human__front__circle"></div>
+          <img v-if="type !== 2 && armDeg > 0" class="human__front__circle__arrow" :src="require('@/assets/icon-white-arrow-right.svg')" />
+          <img class="human__front__body" :src="require('@/assets/body-front-1.svg')" />
+          <img v-if="type !== 2" class="human__front__arm" :style="`transform: rotate(-${realArmDeg}deg)`" :src="require('@/assets/body-front-2.svg')" />
+          <img v-else class="human__front__arm" :style="`transform: rotate(-${realArmDeg}deg) translateY(-${comDeg * 2}px)`" :src="require('@/assets/body-front-2.svg')" />
+          <img class="human__front__cloth" :src="require('@/assets/body-front-3.svg')" />
+          <img v-if="type !== 2" class="human__front__band" :src="require('@/assets/body-front-4.svg')" />
+          <img v-else class="human__front__band2" :src="require('@/assets/body-front-5.svg')" :style="`transform: scaleY(${comDegScale})`" />
+          <img class="human__front__point" :src="require('@/assets/body-point.svg')" />
+          <div v-if="type === 2" class="human__front__focus"></div>
+          <div v-if="type === 2" class="human__front__focus2"></div>
+        </div>
+      </div>
     </div>
     <div class="human__front__extra" v-if="type !== 2">
       <div v-if="type === 1" class="human__front__title">正确姿势</div>
-      <div class="human__front__deg">{{armDeg}}˚</div>
+      <div class="human__front__deg" :style="degbg">{{armDeg}}˚</div>
     </div>
     <div class="human__front__extra" v-else>
-      <div class="human__front__baseline"></div>
-      <div v-if="comDeg" class="human__front__redline" :style="`transform: translateY(-${comDeg * 2}px)`"></div>
-      <img class="human__front__redarrow" :src="require('@/assets/icon-red-arrow-up.svg')" />
+      <div v-if="zoom === 30" class="human__front__baseline"></div>
+      <div v-if="comDeg && zoom === 30" class="human__front__redline" :style="`transform: translateY(-${comDeg * 2}px)`"></div>
+      <img v-if="zoom === 30" class="human__front__redarrow" :src="require('@/assets/icon-red-arrow-up.svg')" />
       <div class="human__front__title">发生肩部上提代偿</div>
       <div class="human__front__comdeg">{{comDeg}}˚</div>
     </div>
@@ -36,16 +40,20 @@ export default {
     initData: Array,
     trainData: Array,
     type: Number,
-    zoom: Number
+    zoom: Number,
+    waiting: Boolean,
   },
   data() {
     return {
-      sektor: null
+      sektor: null,
+      degbg: null,
+      degbgAnimation: null, 
+      time: -50
     }
   },
   mounted() {
     const circle = this.$refs.circle
-    this.sektor = new Sektor(circle, { angle: this.armDeg })
+    this.sektor = circle && new Sektor(circle, { angle: this.armDeg })
   },
   computed: {
     armDeg() {
@@ -63,12 +71,32 @@ export default {
       return 1 + this.comDeg / 100
     },
     zoomScale() {
+      if (this.type === 2) {
+        return 1
+      }
       return 1 + (this.zoom - 30) / 100 * 2
     }
   },
   watch: {
     armDeg(deg) {
-      this.sektor.animateTo(deg)
+      this.sektor && this.sektor.animateTo(deg)
+    },
+    waiting(val) {
+      if (val) {
+        this.time = -50
+        this.degbgAnimation = setInterval(() => {
+          if (this.time < 60) {
+            this.time ++
+            this.degbg = `background: linear-gradient(90deg, #FF9D48 ${this.time}%, #FFFFFF ${this.time + 50}%);`
+          } else {
+            this.degbg = 'background: #ADE664;'
+            clearInterval(this.degbgAnimation)
+          }
+        }, 20)
+      } else {
+        clearInterval(this.degbgAnimation)
+        this.degbg = null
+      }
     }
   }
 }
@@ -81,6 +109,17 @@ export default {
     background: url('../assets/body-bg.svg') no-repeat top center;
     width: 100%;
     height: 100%;
+
+    &__mask {
+      width: 100%;
+      height: 150%;
+      overflow: hidden;
+    }
+
+    &__scacle {
+      transform-origin: 403px 300px;
+      transition: 100ms;
+    }
 
     &__wrap {
       position: absolute;
@@ -216,7 +255,7 @@ export default {
       width: 131px;
       height: 131px;
       border-radius: 200%;
-      background: #FFF900;
+      background: #E66464;
       z-index: 1;
       left: 206px;
       top: 89px;
@@ -246,6 +285,10 @@ export default {
   .type-1 {
     left: 0;
 
+    .human__front__scacle {
+      transform-origin: 99px 300px;
+    }
+
     .human__front__title {
       background: #7564E6;
       color: #fff;
@@ -263,7 +306,8 @@ export default {
     background: #fff url('../assets/body-bg.svg') no-repeat center center;
 
     .human__front__title {
-      background: #FFF900;
+      background: #E66464;
+      color: #fff;
     }
 
     .human__front__comdeg {
