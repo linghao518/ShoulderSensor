@@ -362,16 +362,16 @@ export default {
   }
 
   .type-3 {
-    top: 19px;
-    left: 56px;
+    top: 0;
+    left: 0;
     background: none;
 
     .human__side__wrap {
       position: relative;
       transform: scale(0.19);
       transform-origin: 0 0;
-      top: 0;
-      left: 0;
+      top: 14px;
+      left: 55px;
     }
 
     .human__side__circle, .human__side__extra {
