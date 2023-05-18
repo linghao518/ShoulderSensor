@@ -6,8 +6,10 @@
           <div v-if="type !== 2" ref="circle" class="human__front__circle"></div>
           <img v-if="type !== 2 && armDeg > 0" class="human__front__circle__arrow" :src="require('@/assets/icon-white-arrow-right.svg')" />
           <img class="human__front__body" :src="require('@/assets/body-front-1.svg')" />
-          <img v-if="type !== 2" class="human__front__arm" :style="`transform: rotate(-${realArmDeg}deg)`" :src="require('@/assets/body-front-2.svg')" />
-          <img v-else class="human__front__arm" :style="`transform: rotate(-${realArmDeg}deg) translateY(-${comDeg * 2}px)`" :src="require('@/assets/body-front-2.svg')" />
+          <div v-if="type !== 2" class="human__front__arm" :style="type !== 2 ? `transform: rotate(-${realArmDeg}deg)` : `transform: rotate(-${realArmDeg}deg) translateY(-${comDeg * 2}px)`">
+            <img :src="require('@/assets/body-front-2.svg')" />
+            <img class="human__front__arm--cloth" :src="require('@/assets/body-front-2-2.svg')" />
+          </div>
           <img class="human__front__cloth" :src="require('@/assets/body-front-3.svg')" />
           <img v-if="type !== 2" class="human__front__band" :src="require('@/assets/body-front-4.svg')" />
           <img v-else class="human__front__band2" :src="require('@/assets/body-front-5.svg')" :style="`transform: scaleY(${comDegScale})`" />
@@ -143,6 +145,13 @@ export default {
       transform-origin: 20px 25px;
       transition: 300ms;
       z-index: 11;
+      
+      img {
+        position: absolute;
+        width: 100%;
+        left: 0;
+        top: 0;
+      }
     }
 
     &__cloth {

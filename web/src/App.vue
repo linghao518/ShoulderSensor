@@ -1,8 +1,8 @@
 <template>
   <div id="app">
     <div class="left-buttons">
-      <button @click="step = 0"><img :src="require('@/assets/icon-close.svg')" /></button>
-      <button class="left-buttons__equal" :class="{'active': step === 2}"><img :src="require('@/assets/icon-equal.svg')" /></button>
+      <button><img :src="require('@/assets/icon-close.svg')" /></button>
+      <button class="left-buttons__equal" :class="{'active': step === 3}"><img :src="require('@/assets/icon-equal.svg')" /></button>
     </div>
     <div class="test-data">
       <div>初始化<input v-model.number="initData[0]" /><input v-model.number="initData[1]" /><input v-model.number="initData[2]" /><input v-model.number="initData[3]" /><input v-model.number="initData[4]" /><input v-model.number="initData[5]" /></div>
@@ -11,12 +11,38 @@
       <button @click="mockTrain">Train</button>
       <button @click="next">Next</button>
     </div>
-    <div v-if="step === 1" class="step1">
-      <img class="step1__bg" :src="require('@/assets/step1.svg')" />
-      <img class="step1__cloth" :src="require('@/assets/step1-cloth.svg')" />
+    <div v-if="step === 0" class="step0">
+      <img class="step0__bg" :src="require('@/assets/step0.svg')" />
+      <div class="step0__start" @click="start"></div>
     </div>
     <transition name="fade">
-      <div v-if="step === 2">
+      <div v-if="step === 1" class="step1">
+        <div class="step1__confirm" @click="confirm"></div>
+        <img class="step1__bg" :src="require('@/assets/step1.svg')" />
+        <HumanBodyFront class="step1__body" :initData="initData" :trainData="trainData" :type="3" />
+        <div class="step1__data step1__data1">
+          <div class="step1__data__item">{{initData[0].toFixed(1)}}</div>
+          <div class="step1__data__item">{{initData[1].toFixed(1)}}</div>
+          <div class="step1__data__item">{{initData[2].toFixed(1)}}</div>
+        </div>
+        <div class="step1__data step1__data2">
+          <div class="step1__data__item">{{initData[3].toFixed(1)}}</div>
+          <div class="step1__data__item">{{initData[4].toFixed(1)}}</div>
+          <div class="step1__data__item">{{initData[5].toFixed(1)}}</div>
+        </div>
+      </div>
+    </transition>
+    
+    <transition name="fade">
+      <div v-if="step === 2" class="step2">
+        <img class="step2__bg" :src="require('@/assets/step2.svg')" />
+        <div class="step2__start-train" @click="startTrain"></div>
+        <HumanBodyFront class="step2__body" :initData="initData" :trainData="trainData" :type="3" />
+      </div>
+    </transition>
+
+    <transition name="fade">
+      <div v-if="step === 3">
         <HumanBody :initData="initData" :trainData="trainData" :view="view" :waiting="waiting" />
         <div class="current-pose">
           <button><img :src="require('@/assets/icon-arrow-down.svg')" /></button>
@@ -109,7 +135,8 @@ export default {
       success: false,
       successTimeout: null,
       waiting: false,
-      step: 2
+      step: 0,
+      startInterval: null
     }
   },
   mounted() {
@@ -127,8 +154,21 @@ export default {
     }
   },
   methods: {
+    start() {
+      this.step = 1
+      this.startInterval = setInterval(() => {
+        this.initData = [34 + this.mockData(), 7 + this.mockData(), 34 + this.mockData(), 7 + this.mockData(), 28 + this.mockData(), 28 + this.mockData()]
+      }, 500)
+    },
+    confirm() {
+      clearInterval(this.startInterval)
+      this.step = 2
+    },
     init() {
       this.$socket.send('init')
+    },
+    startTrain() {
+      this.step = 3
     },
     train() {
       this.$socket.send('train')
@@ -219,7 +259,6 @@ export default {
       return Math.floor(Math.random() * 10)
     },
     mockInit() {
-      this.step = 2
       this.initData = [34.79999923706055, 7.800000190734863, 34.900001525878906, 7.699999809265137, 28.399999618530273, 28]
     }
   }
@@ -236,27 +275,6 @@ export default {
   border-radius: 5px;
   overflow: hidden;
   font-family: Arial, Helvetica, sans-serif;
-}
-
-.screen {
-  position: relative;
-}
-
-.body {
-  width: 400px;
-  height: 400px;
-  background: #ccc;
-}
-
-.body .arm {
-  position: absolute;
-  top: 0;
-  left: 380px;
-  width: 200px;
-  height: 50px;
-  background: #ffcc00;
-  transform: rotate(10deg);
-  transform-origin: 25px 25px;
 }
 
 .left-buttons {
@@ -284,6 +302,11 @@ export default {
   button.left-buttons__equal {
     width: 160px;
     margin-left: 30px;
+    background: #EEEDF3;
+
+    &.active {
+      background: #FF8E00;
+    }
 
     img {
       height: 35%;
@@ -569,17 +592,95 @@ export default {
   font-size: 12px;
 }
 
-.step1 {
+.step0 {
   &__bg {
     width: 100%;
   }
 
-  &__cloth {
+  &__start {
     position: absolute;
-    right: 367px;
-    top: 290px;
-    width: 274px;
-    animation: clothfade 1s alternate infinite;
+    width: 305px;
+    height: 85px;
+    bottom: 136px;
+    left: 646px;
+    cursor: pointer;
+  }
+}
+
+.step1, .step2 {
+  &__bg {
+    width: 100%;
+  }
+
+  &__body {
+    left: 887px;
+    top: 136px;
+  }
+
+  &__confirm {
+    position: absolute;
+    width: 300px;
+    height: 80px;
+    left: 192px;
+    top: 713px;
+    cursor: pointer;
+  }
+
+  &__data {
+    position: absolute;
+    top: 0;
+    left: 0;
+    font-size: 20px;
+    width: 800px;
+    display: flex;
+
+    &__item {
+      width: 107px;
+      height: 107px;
+      margin-right: 26px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+  }
+
+  &__data1 {
+    top: 322px;
+    left: 157px;
+  }
+
+  &__data2 {
+    top: 548px;
+    left: 157px;
+  }
+
+  ::v-deep .type-3 .human__front__wrap {
+    transform: scale(1);
+
+    .human__front__point {
+      display: none;
+    }
+
+    .human__front__band, .human__front__arm--cloth {
+      animation: clothfade 1s alternate infinite;
+    }
+  }
+}
+
+.step2 {
+  ::v-deep .type-3 .human__front__wrap {
+    .human__front__band, .human__front__arm--cloth {
+      animation: none;
+    }
+  }
+
+  &__start-train {
+    position: absolute;
+    width: 300px;
+    height: 80px;
+    left: 192px;
+    top: 563px;
+    cursor: pointer;
   }
 }
 
