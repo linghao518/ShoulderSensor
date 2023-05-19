@@ -119,7 +119,7 @@ export default {
     }
 
     &__scacle {
-      transform-origin: 403px 300px;
+      transform-origin: 603px 234px;
       transition: 100ms;
     }
 
@@ -328,16 +328,16 @@ export default {
   }
 
   .type-3 {
-    top: 8px;
-    left: 41px;
+    top: 0;
+    left: 0;
     background: none;
 
     .human__front__wrap {
       position: relative;
       transform: scale(0.17);
       transform-origin: 0 0;
-      top: 0;
-      left: 0;
+      top: 9px;
+      left: 41px;
     }
 
     .human__front__circle, .human__front__extra {

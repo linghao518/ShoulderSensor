@@ -44,46 +44,16 @@
     <transition name="fade">
       <div v-if="step === 3">
         <HumanBody :initData="initData" :trainData="trainData" :view="view" :waiting="waiting" />
-        <div v-if="false" class="progress">
-          <div class="progress__button"><img :src="require('@/assets/icon-arrow-left.svg')" /></div>
-          <div class="progress__body">
-            <div class="progress__body__base">
-              <div class="progress__body__base__line"></div>
-              <div class="progress__body__base__rounds">
-                <i class="progress__body__base__rounds__round" />
-                <i class="progress__body__base__rounds__round" />
-                <i class="progress__body__base__rounds__round" />
-                <i class="progress__body__base__rounds__round" />
-                <i class="progress__body__base__rounds__round" />
-                <i class="progress__body__base__rounds__round" />
-                <i class="progress__body__base__rounds__round" />
-                <i class="progress__body__base__rounds__round" />
-              </div>
-            </div>
-
-            <div class="progress__body__active">
-              <div class="progress__body__active__line"></div>
-              <div class="progress__body__active__rounds">
-                <i class="progress__body__active__rounds__round" />
-                <i class="progress__body__active__rounds__round" />
-                <i class="progress__body__active__rounds__round" />
-              </div>
-            </div>
-
-            <i class="progress__body__current" />
-          </div>
-          <div class="progress__button"><img :src="require('@/assets/icon-arrow-right.svg')" /></div>
-        </div>
         <div class="current-pose">
           <button><img :src="require('@/assets/icon-arrow-down.svg')" /></button>
-          <span>当前动作：{{taskList[currentTaskIndex].title}}˚</span>
+          <span>当前动作：{{taskList[currentTaskIndex].title}}</span>
           <span>持续 2s</span>
         </div>
 
         <div class="task-panel right-panel">
           <div class="right-panel__title">康复动作(共5组)<img :src="require('@/assets/icon-pause.svg')" /></div>
           <div class="task-panel__body">
-            <div v-for="(task, index) in taskList" :key="task.title" class="task-panel__item" :class="{'active': index === currentTaskIndex}">
+            <div v-for="(task, index) in taskList" :key="task.title" class="task-panel__item" :class="{'active': index === currentTaskIndex}" @click="changeTask(index)">
               {{task.title}}
               <img v-if="index === currentTaskIndex" :src="require('@/assets/icon-task-active.svg')" />
             </div>
@@ -248,6 +218,14 @@ export default {
       } else {
         this.currentTaskIndex = 0
         this.view = 1
+      }
+    },
+    changeTask(index) {
+      this.currentTaskIndex = index
+      if (this.currentTaskIndex == 0) {
+        this.view = 1
+      } else {
+        this.view = 2
       }
     },
     getTime() {
@@ -510,6 +488,7 @@ export default {
     padding: 0 25px;
     font-size: 20px;
     color: #4D4D4D;
+    cursor: pointer;
 
     img {
       width: 34px;
