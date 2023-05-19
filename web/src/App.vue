@@ -1,9 +1,20 @@
 <template>
   <div id="app">
     <div class="left-buttons">
-      <button><img :src="require('@/assets/icon-close.svg')" /></button>
-      <button class="left-buttons__equal" :class="{'active': step === 3}"><img :src="require('@/assets/icon-equal.svg')" /></button>
+      <button @click="step = 0"><img :src="require('@/assets/icon-close.svg')" /></button>
+      <button @click="userInfo = true" class="left-buttons__equal" :class="{'active': step === 3}"><img :src="require('@/assets/icon-equal.svg')" /></button>
     </div>
+    <transition name="fade">
+      <div class="user-info" v-if="userInfo">
+        <div class="user-info__bg"></div>
+        <div class="user-info__panel">
+          <img :src="require('@/assets/user-info.svg')" />
+          <div class="user-info__panel__home" @click="step = 0;userInfo = false"></div>
+          <div class="user-info__panel__reset" @click="step = 1;userInfo = false"></div>
+          <div class="user-info__panel__close" @click="userInfo = false"></div>
+        </div>
+      </div>
+    </transition>
     <div class="test-data">
       <div>初始化<input v-model.number="initData[0]" /><input v-model.number="initData[1]" /><input v-model.number="initData[2]" /><input v-model.number="initData[3]" /><input v-model.number="initData[4]" /><input v-model.number="initData[5]" /></div>
       <div>训练<input v-model.number="trainData[0]" /><input v-model.number="trainData[1]" /><input v-model.number="trainData[2]" /><input v-model.number="trainData[3]" /><input v-model.number="trainData[4]" /><input v-model.number="trainData[5]" /></div>
@@ -11,10 +22,12 @@
       <button @click="mockTrain">Train</button>
       <button @click="next">Next</button>
     </div>
+    <transition name="fade">
     <div v-if="step === 0" class="step0">
       <img class="step0__bg" :src="require('@/assets/step0.svg')" />
       <div class="step0__start" @click="start"></div>
     </div>
+    </transition>
     <transition name="fade">
       <div v-if="step === 1" class="step1">
         <div class="step1__confirm" @click="confirm"></div>
@@ -92,6 +105,15 @@
         </transition>
       </div>
     </transition>
+
+    <transition name="fade">
+      <div v-if="step === 4" class="step4">
+        <img class="step4__bg" :src="require('@/assets/step4.svg')" />
+        <div class="step4__count">{{totalCount}}</div>
+        <div class="step4__time">{{time}}</div>
+        <div class="step4__home" @click="step = 0"></div>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -130,13 +152,15 @@ export default {
       seconds: 0,
       time: '00:00',
       count: 0,
+      totalCount: 0,
       view: 1,
       currentTaskIndex: 0,
       success: false,
       successTimeout: null,
       waiting: false,
       step: 0,
-      startInterval: null
+      startInterval: null,
+      userInfo: false
     }
   },
   mounted() {
@@ -169,6 +193,8 @@ export default {
     },
     startTrain() {
       this.step = 3
+      this.starTime = new Date().getTime()
+      this.timeInterval = setInterval(this.getTime, 1000)
     },
     train() {
       this.$socket.send('train')
@@ -205,6 +231,7 @@ export default {
     },
     restart() {
       this.count = 0
+      this.totalCount = 0
       this.success = false
       this.waiting = false
     },
@@ -216,8 +243,8 @@ export default {
         this.currentTaskIndex = 1
         this.view = 2
       } else {
-        this.currentTaskIndex = 0
-        this.view = 1
+        this.step = 4
+        clearInterval(this.timeInterval)
       }
     },
     changeTask(index) {
@@ -236,6 +263,7 @@ export default {
       this.time = `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`
       if (this.trainData[0] > 5 || this.trainData[2] > 5) {
         this.count ++
+        this.totalCount ++
       }
     },
     handleMessage(data) {
@@ -292,6 +320,7 @@ export default {
     background: #FF8E00;
     border-radius: 20px;
     border: none; 
+    cursor: pointer;
 
     img {
       width: auto;
@@ -684,12 +713,86 @@ export default {
   }
 }
 
-@keyframes clothfade {
-  0% {
-   opacity: 10%;
+.step4 {
+  &__bg {
+    width: 100%;
   }
-  100% {
-    opacity: 100%;
+
+  &__count, &__time {
+    color: #fff;
+    position: absolute;
+    top: 386px;
+    left: 221px;
+    width: 81px;
+    text-align: center;
+    font-size: 25px;
+  }
+
+  &__time {
+    left: 337px;
+    width: 128px;
+  }
+
+  &__home {
+    position: absolute;
+    width: 300px;
+    height: 80px;
+    left: 197px;
+    top: 736px;
+    cursor: pointer;
+  }
+}
+  
+
+.user-info {
+  position: relative;
+  height: 100%;
+  z-index: 19;
+
+  &__bg {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 449px;
+    background: rgba(234, 231, 255, 0.08);
+    backdrop-filter: blur(25px);
+  }
+
+  &__panel {
+    position: absolute;
+    width: 448px;
+    top: -8px;
+
+    img {
+      width: 100%;
+    }
+
+    &__home {
+      position: absolute;
+      width: 70px;
+      height: 83px;
+      left: 118px;
+      top: 516px;
+      cursor: pointer;
+    }
+
+    &__reset {
+      position: absolute;
+      width: 70px;
+      height: 83px;
+      left: 260px;
+      top: 516px;
+      cursor: pointer;
+    }
+
+    &__close {
+      position: absolute;
+      width: 230px;
+      height: 53px;
+      left: 106px;
+      top: 631px;
+      cursor: pointer;
+    }
   }
 }
 
@@ -698,5 +801,14 @@ export default {
 }
 .fade-enter, .fade-leave-to /* .fade-leave-active below version 2.1.8 */ {
   opacity: 0;
+}
+
+@keyframes clothfade {
+  0% {
+   opacity: 10%;
+  }
+  100% {
+    opacity: 100%;
+  }
 }
 </style>

@@ -6,7 +6,7 @@
           <div v-if="type !== 2" ref="circle" class="human__front__circle"></div>
           <img v-if="type !== 2 && armDeg > 0" class="human__front__circle__arrow" :src="require('@/assets/icon-white-arrow-right.svg')" />
           <img class="human__front__body" :src="require('@/assets/body-front-1.svg')" />
-          <div v-if="type !== 2" class="human__front__arm" :style="type !== 2 ? `transform: rotate(-${realArmDeg}deg)` : `transform: rotate(-${realArmDeg}deg) translateY(-${comDeg * 2}px)`">
+          <div class="human__front__arm" :style="type !== 2 ? `transform: rotate(-${realArmDeg}deg)` : `transform: rotate(-${realArmDeg}deg) translateY(-${comDeg * 2}px)`">
             <img :src="require('@/assets/body-front-2.svg')" />
             <img class="human__front__arm--cloth" :src="require('@/assets/body-front-2-2.svg')" />
           </div>
