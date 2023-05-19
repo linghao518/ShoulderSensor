@@ -622,8 +622,8 @@ export default {
     position: absolute;
     width: 305px;
     height: 85px;
-    bottom: 136px;
-    left: 646px;
+    bottom: 352px;
+    left: 799px;
     cursor: pointer;
   }
 }
