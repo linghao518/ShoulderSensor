@@ -23,6 +23,9 @@
 - [x] 界面优化
   - [x] 停止训练 / 开始训练 按钮优化
 
+## Python API运行方法
+1. 执行python3 api.py
+
 ## WEB界面启动方法
 1. 按照LTS版本的Node.js，https://nodejs.org
 2. 进入到项目web目录
