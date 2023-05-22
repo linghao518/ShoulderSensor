@@ -15,7 +15,7 @@
         </div>
       </div>
     </transition>
-    <div class="test-data">
+    <div v-if="false" class="test-data">
       <div>初始化<input v-model.number="initData[0]" /><input v-model.number="initData[1]" /><input v-model.number="initData[2]" /><input v-model.number="initData[3]" /><input v-model.number="initData[4]" /><input v-model.number="initData[5]" /></div>
       <div>训练<input v-model.number="trainData[0]" /><input v-model.number="trainData[1]" /><input v-model.number="trainData[2]" /><input v-model.number="trainData[3]" /><input v-model.number="trainData[4]" /><input v-model.number="trainData[5]" /></div>
       <button @click="mockInit">Init</button>
@@ -160,6 +160,7 @@ export default {
       waiting: false,
       step: 0,
       startInterval: null,
+      trainInterval: null,
       userInfo: false
     }
   },
@@ -181,8 +182,9 @@ export default {
     start() {
       this.step = 1
       this.startInterval = setInterval(() => {
-        this.initData = [34 + this.mockData(), 7 + this.mockData(), 34 + this.mockData(), 7 + this.mockData(), 28 + this.mockData(), 28 + this.mockData()]
-      }, 500)
+        this.$socket.send('serial')
+        // this.initData = [34 + this.mockData(), 7 + this.mockData(), 34 + this.mockData(), 7 + this.mockData(), 28 + this.mockData(), 28 + this.mockData()]
+      }, 100)
     },
     confirm() {
       clearInterval(this.startInterval)
@@ -195,12 +197,14 @@ export default {
       this.step = 3
       this.starTime = new Date().getTime()
       this.timeInterval = setInterval(this.getTime, 1000)
+      this.trainInterval = setInterval(() => {
+        this.$socket.send('train')
+      }, 100)
     },
-    train() {
-      this.$socket.send('train')
-      this.starTime = new Date().getTime()
-      this.timeInterval = setInterval(this.getTime, 1000)
-    },
+    // train() {
+    //   this.starTime = new Date().getTime()
+    //   this.timeInterval = setInterval(this.getTime, 1000)
+    // },
     trainCb() {
       if (this.currentTaskIndex == 0) {
         const res = Math.floor(this.initData[4] + this.trainData[4])
@@ -234,6 +238,8 @@ export default {
       this.totalCount = 0
       this.success = false
       this.waiting = false
+      clearInterval(this.trainInterval)
+      clearInterval(this.timeInterval)
     },
     next() {
       this.count = 0
@@ -245,6 +251,7 @@ export default {
       } else {
         this.step = 4
         clearInterval(this.timeInterval)
+        clearInterval(this.trainInterval)
       }
     },
     changeTask(index) {
@@ -269,12 +276,14 @@ export default {
     handleMessage(data) {
       const msg = JSON.parse(data.data)
       switch(msg.type) {
+        case 'serial':
+          this.initData = msg.data
+          break
         case 'init':
           this.initData = msg.data
-          this.train()
           break
         case 'train':
-          // this.trainData = msg.data
+          this.trainData = msg.data
           // this.armDeg = Math.floor(this.trainData[0] * 100 * Math.random() + this.initData[0])
           // this.sektor.animateTo(this.armDeg)
           break
