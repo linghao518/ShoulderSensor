@@ -67,15 +67,18 @@ def readSerial():
     #     "92.15, 110.00, 47.29, 104.29, 115.91,",
     # ]
     # rawSensorStr = random.choice(sensorResultList)
-    rawSensorStr = board.readline().decode("utf-8")
-    rawSensor = np.array([np.double(i) for i in rawSensorStr.split(',')[:-1]])
-    deqSensor.append(rawSensor)
-    sensor = np.array(list(deqSensor))
-    global sensorDeqStd
-    sensorDeqStd = standardize_sensor_channlewise(sensor)
-    # Send sensor deque for predict.
-    predictSerial()
-    time.sleep(0.1)
+    if (not(board is None)):
+      print('主板')
+      print(board)
+      rawSensorStr = board.readline().decode("utf-8")
+      rawSensor = np.array([np.double(i) for i in rawSensorStr.split(',')[:-1]])
+      deqSensor.append(rawSensor)
+      sensor = np.array(list(deqSensor))
+      global sensorDeqStd
+      sensorDeqStd = standardize_sensor_channlewise(sensor)
+      # Send sensor deque for predict.
+      predictSerial()
+      time.sleep(0.1)
 
 
 # Start serial

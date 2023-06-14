@@ -274,19 +274,23 @@ export default {
       }
     },
     handleMessage(data) {
-      const msg = JSON.parse(data.data)
-      switch(msg.type) {
-        case 'serial':
-          this.initData = msg.data
-          break
-        case 'init':
-          this.initData = msg.data
-          break
-        case 'train':
-          this.trainData = msg.data
-          // this.armDeg = Math.floor(this.trainData[0] * 100 * Math.random() + this.initData[0])
-          // this.sektor.animateTo(this.armDeg)
-          break
+      try {
+        const msg = JSON.parse(data.data)
+        switch(msg.type) {
+          case 'serial':
+            this.initData = msg.data
+            break
+          case 'init':
+            this.initData = msg.data
+            break
+          case 'train':
+            this.trainData = msg.data
+            // this.armDeg = Math.floor(this.trainData[0] * 100 * Math.random() + this.initData[0])
+            // this.sektor.animateTo(this.armDeg)
+            break
+        }
+      } catch(e) {
+        console.log(e)
       }
     },
     mockTrain() {
