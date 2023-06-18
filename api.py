@@ -53,7 +53,7 @@ def predictSerial():
     if (not None and isinstance(initAngle, np.ndarray)):
       diffAngle = rtmAngle - initAngle
       diffAngle = np.around(diffAngle, 1)
-      # print(diffAngle)
+      print(diffAngle)
 
 # Read Serial
 def readSerial():
@@ -68,10 +68,8 @@ def readSerial():
     # ]
     # rawSensorStr = random.choice(sensorResultList)
     if (not(board is None)):
-      print('主板')
-      print(board)
       rawSensorStr = board.readline().decode("utf-8")
-      rawSensor = np.array([np.double(i) for i in rawSensorStr.split(',')[:-1]])
+      rawSensor = np.array([np.double(i) for i in rawSensorStr.split(',')])
       deqSensor.append(rawSensor)
       sensor = np.array(list(deqSensor))
       global sensorDeqStd
@@ -82,7 +80,7 @@ def readSerial():
 
 
 # Start serial
-async def serial():
+async def doSerial():
   if (not(rtmAngle is None)):
     data = {
       'type': 'serial',
@@ -130,7 +128,7 @@ def default():
 async def action(operation):
   actionDict = {
     # 'readSerial': readSerial,
-    'serial': serial,
+    'serial': doSerial,
     'init': init,
     'train': train
   }
@@ -146,17 +144,19 @@ async def handle_client(websocket):
 
   try:
       board = serial.Serial(  # 下面这些参数根据情况修改
-      port='/dev/cu.usbserial-1430',  # 串口
-      baudrate=9600,  # 波特率
-      parity=serial.PARITY_ODD,
-      stopbits=serial.STOPBITS_TWO,
-      bytesize=serial.SEVENBITS)
-  except Exception:
+        port='COM5',  # 串口
+        baudrate=9600,  # 波特率
+        timeout =1,
+        parity=serial.PARITY_ODD,
+        stopbits=serial.STOPBITS_TWO,
+        bytesize=serial.SEVENBITS)
+      print(board.readline().decode('utf-8'))
+  except Exception as error:
+      print(error)
       print("[ERROR] Please check usb serial!")
       
   while True:
     message = await websocket.recv()
-    print(message)
     await action(message)
     # response = f"Echo: {message}"
     # await websocket.send(response)
