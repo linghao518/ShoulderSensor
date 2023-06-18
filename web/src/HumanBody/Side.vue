@@ -85,9 +85,9 @@ export default {
     },
     comDeg() {
       if (this.comType === 1) {
-        return this.trainData[0]
+        return Math.floor(this.trainData[0])
       } else if(this.comType === 2) {
-        return this.trainData[2]
+        return Math.floor(this.trainData[2])
       }
       return 0
     },

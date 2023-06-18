@@ -67,7 +67,7 @@ export default {
       return deg
     },
     comDeg() {
-      return this.trainData[0]
+      return Math.floor(this.trainData[0])
     },
     comDegScale() {
       return 1 + this.comDeg / 100
